@@ -15,9 +15,8 @@ import org.slf4j.LoggerFactory;
 
 public class  MainVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
-  public static final int PORT = 8888;
-
   public static void main(String[] args) {
+    System.setProperty(ConfigLoader.SERVER_PORT, "9000");
     var vertx = Vertx.vertx();
     vertx.exceptionHandler(error ->
       LOGGER.error("Unhandled:", error)
@@ -33,6 +32,15 @@ public class  MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) throws Exception {
+    ConfigLoader.load(vertx)
+      .onFailure(startPromise::fail)
+      .onSuccess(configuration -> {
+        LOGGER.info("Retrieve Configuration: {}", configuration);
+        startHttpServerAndAttachRoute(startPromise, configuration);
+      });
+  }
+
+  private void startHttpServerAndAttachRoute(Promise<Void> startPromise, final BrokerConfig config) {
     final Router restApi = Router.router(vertx);
     restApi.route()
         .handler(BodyHandler.create())
@@ -44,10 +52,10 @@ public class  MainVerticle extends AbstractVerticle {
     vertx.createHttpServer()
       .requestHandler(restApi)
       .exceptionHandler(error -> LOGGER.error("HTTP server error: ", error))
-      .listen(PORT, http -> {
+      .listen(config.getServerPort(), http -> {
         if (http.succeeded()) {
           startPromise.complete();
-          LOGGER.info("HTTP server started on port 8888");
+          LOGGER.info("HTTP server started on port {}, version {}", config.getServerPort(), config.getVersion());
         } else {
           startPromise.fail(http.cause());
         }

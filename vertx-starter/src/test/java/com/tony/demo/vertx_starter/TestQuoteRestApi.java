@@ -15,17 +15,12 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
-public class TestQuoteRestApi {
+public class TestQuoteRestApi extends AbstractRestApiTest{
   private static final Logger LOGGER = LoggerFactory.getLogger(TestQuoteRestApi.class);
-
-  @BeforeEach
-  void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new MainVerticle(), testContext.succeeding(id -> testContext.completeNow()));
-  }
 
   @Test
   void run_quote_for_assets(Vertx vertx, VertxTestContext context) throws Throwable {
-    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(com.tony.demo.vertx_starter.broker.MainVerticle.PORT));
+    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(TEST_SERVER_PORT));
     client.get("/quotes/AAAA")
       .send()
       .onComplete(context.succeeding(response -> {
@@ -39,7 +34,7 @@ public class TestQuoteRestApi {
 
   @Test
   void run_not_found_for_unknown_assets(Vertx vertx, VertxTestContext context) throws Throwable {
-    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(com.tony.demo.vertx_starter.broker.MainVerticle.PORT));
+    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(TEST_SERVER_PORT));
     client.get("/quotes/UNKNOWN")
       .send()
       .onComplete(context.succeeding(response -> {

@@ -22,17 +22,12 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
-public class TestWatchlistRestApi {
+public class TestWatchlistRestApi extends AbstractRestApiTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(TestWatchlistRestApi.class);
-
-  @BeforeEach
-  void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new MainVerticle(), testContext.succeeding(id -> testContext.completeNow()));
-  }
 
   @Test
   void adds_and_returns_watchlist_for_account(Vertx vertx, VertxTestContext context) throws Throwable {
-    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(com.tony.demo.vertx_starter.broker.MainVerticle.PORT));
+    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(TEST_SERVER_PORT));
     var accountId = UUID.randomUUID();
     client.put("/account/watchlist/" + accountId)
       .sendJsonObject(getBody())
@@ -58,7 +53,7 @@ public class TestWatchlistRestApi {
 
   @Test
   void adds_and_deletes_watchlist_for_account(Vertx vertx, VertxTestContext context) {
-    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(com.tony.demo.vertx_starter.broker.MainVerticle.PORT));
+    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(TEST_SERVER_PORT));
     var accountId = UUID.randomUUID();
     client.put("/account/watchlist/" + accountId)
       .sendJsonObject(getBody())
