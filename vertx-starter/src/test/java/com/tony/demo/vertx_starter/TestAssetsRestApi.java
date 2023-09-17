@@ -1,5 +1,6 @@
 package com.tony.demo.vertx_starter;
 
+import com.tony.demo.vertx_starter.broker.ConfigLoader;
 import com.tony.demo.vertx_starter.broker.MainVerticle;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Vertx;
@@ -17,17 +18,12 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
-public class TestAssetsRestApi {
+public class TestAssetsRestApi extends AbstractRestApiTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(TestAssetsRestApi.class);
-
-  @BeforeEach
-  void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new MainVerticle(), testContext.succeeding(id -> testContext.completeNow()));
-  }
 
   @Test
   void run_all_assets(Vertx vertx, VertxTestContext context) throws Throwable {
-    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(com.tony.demo.vertx_starter.broker.MainVerticle.PORT));
+    var client = WebClient.create(vertx, new WebClientOptions().setDefaultPort(TEST_SERVER_PORT));
     client.get("/assets")
       .send()
       .onComplete(context.succeeding(response -> {
