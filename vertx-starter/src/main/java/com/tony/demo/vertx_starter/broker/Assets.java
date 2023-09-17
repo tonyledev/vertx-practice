@@ -1,9 +1,12 @@
 package com.tony.demo.vertx_starter.broker;
 
-import io.vertx.core.json.JsonObject;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Assets {
   String name;
 }

@@ -1,18 +1,19 @@
 package com.tony.demo.vertx_starter.broker;
 
 import com.tony.demo.vertx_starter.broker.quotes.QuotesRestApi;
+import com.tony.demo.vertx_starter.broker.watchlist.WatchlistRestApi;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MainVerticle extends AbstractVerticle {
+public class  MainVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
   public static final int PORT = 8888;
 
@@ -33,9 +34,12 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) throws Exception {
     final Router restApi = Router.router(vertx);
-    restApi.route().failureHandler(handleFailure());
+    restApi.route()
+        .handler(BodyHandler.create())
+        .failureHandler(handleFailure());
     AssetsRestApi.attach(restApi);
     QuotesRestApi.attach(restApi);
+    WatchlistRestApi.attach(restApi);
 
     vertx.createHttpServer()
       .requestHandler(restApi)
