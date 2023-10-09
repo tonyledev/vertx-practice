@@ -12,6 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(VertxExtension.class)
 public class FuturePromiseExample {
   private static final Logger LOGGER = LoggerFactory.getLogger(FuturePromiseExample.class);
@@ -87,6 +92,7 @@ public class FuturePromiseExample {
     future
       .map(asString -> {
         LOGGER.debug("Map String to JsonObject");
+        LOGGER.info("log test {}", new JsonObject().put("key", asString));
         return new JsonObject().put("key", asString);
     })
       .map(jsonObject -> new JsonArray().add(jsonObject))
@@ -94,6 +100,37 @@ public class FuturePromiseExample {
       LOGGER.debug("Result: {} of type {}", result, result.getClass().getSimpleName());
       context.completeNow();
     }).onFailure(context::failNow);
+  }
+
+  @Test
+  void futureCompose(Vertx vertx, VertxTestContext context) {
+    final Promise<String> promise = Promise.promise();
+
+    LOGGER.debug("Start");
+
+    // Simulate asynchronous operation with a timer
+    vertx.setTimer(500, id -> {
+      promise.complete("Success");
+      LOGGER.debug("Timer done");
+    });
+
+    Future<String> timerFuture = promise.future();
+
+    timerFuture
+      .compose(asString -> {
+        LOGGER.debug("Map String to JsonObject");
+        LOGGER.info("log test {}", new JsonObject().put("key", asString));
+        return Future.succeededFuture(new JsonObject().put("key", asString));
+      })
+      .compose(jsonObject -> {
+        LOGGER.debug("Map JsonObject to JsonArray");
+        return Future.succeededFuture(new JsonArray().add(jsonObject));
+      })
+      .onSuccess(result -> {
+        LOGGER.debug("Result: {} of type {}", result, result.getClass().getSimpleName());
+        context.completeNow();
+      })
+      .onFailure(context::failNow);
   }
 
   @Test
@@ -114,5 +151,23 @@ public class FuturePromiseExample {
         LOGGER.debug("Server started on port {}", httpServer.actualPort());
         context.completeNow();
       });
+  }
+
+  @Test
+  public void testSequenceFuture() {
+    List<Future<Integer>> list1 = Arrays.asList(Future.succeededFuture(2),
+      Future.succeededFuture(9), Future.succeededFuture(17));
+    Future<List<Integer>> fs1 = Functional.allOfFutures(list1);
+    List<Integer> cpList = Arrays.asList(2, 9, 17);
+    assertEquals(fs1.succeeded(), true);
+    System.out.println(cpList);
+    System.out.println(fs1.result());
+    assertEquals(fs1.result(), cpList);
+
+    List<Future<Integer>> list2 = Arrays.asList(Future.succeededFuture(2),
+      Future.failedFuture("Oops"), Future.succeededFuture(17));
+    Future<List<Integer>> fs2 = Functional.allOfFutures(list2);
+    assertEquals(fs2.succeeded(), false);
+    assertEquals(fs2.cause().getMessage(), "Oops");
   }
 }
